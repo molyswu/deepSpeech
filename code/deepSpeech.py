@@ -5,7 +5,7 @@
 
 Summary of major functions:
 
-  # Compute input feats and labels for training. 
+  # Compute input feats and labels for training.
   inputs, labels, seq_len = inputs()
 
   # Compute inference on the model inputs to make a prediction.
@@ -39,7 +39,7 @@ def inputs(eval_data, data_dir, batch_size, use_fp16, shuffle):
       data_dir: folder containing the pre-processed data
       batch_size: int,size of mini-batch
       use_fp16: bool, if True use fp16 else fp32
-      shuffle: bool, to shuffle the tfrecords or not. 
+      shuffle: bool, to shuffle the tfrecords or not.
 
     Returns:
       feats: MFCC. 4D tensor of [batch_size, T, F, 1] size.
@@ -119,9 +119,9 @@ def inference(feats, seq_lens, params):
         cell = rnn_cell.CustomRNNCell(
             params.num_hidden, activation=tf.nn.relu6,
             use_fp16=params.use_fp16)
-        drop_cell = tf.nn.rnn_cell.DropoutWrapper(
+        drop_cell = tf.contrib.rnn.DropoutWrapper(
             cell, output_keep_prob=params.keep_prob)
-        multi_cell = tf.nn.rnn_cell.MultiRNNCell(
+        multi_cell = tf.contrib.rnn.MultiRNNCell(
             [drop_cell] * params.num_rnn_layers)
 
         seq_lens = tf.div(seq_lens, params.temporal_stride)

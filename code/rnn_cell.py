@@ -4,7 +4,7 @@ Default RNNCell in TensorFlow throws errors when
 variables are re-used between devices.
 """
 
-from tensorflow.python.ops import rnn_cell
+from tensorflow.contrib import rnn as rnn_cell
 from tensorflow.python.ops.math_ops import tanh
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.util import nest
@@ -102,7 +102,7 @@ def _linear(args, output_size, bias, scope=None, use_fp16=False):
         if len(args) == 1:
             res = math_ops.matmul(args[0], matrix)
         else:
-            res = math_ops.matmul(array_ops.concat(1, args), matrix)
+            res = math_ops.matmul(array_ops.concat(args, 1), matrix)
         if not bias:
             return res
         bias_term = _variable_on_cpu('Bias', [output_size],

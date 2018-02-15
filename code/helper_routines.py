@@ -24,8 +24,8 @@ def _activation_summary(act):
     # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
     # session. This helps the clarity of presentation on tensorboard.
     tensor_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', act.op.name)
-    tf.histogram_summary(tensor_name + '/activations', act)
-    tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(act))
+    tf.summary.histogram(tensor_name + '/activations', act)
+    tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(act))
 
 
 def _variable_on_cpu(name, shape, initializer, use_fp16):

@@ -152,8 +152,8 @@ def tower_loss(scope, feats, labels, seq_lens):
     total_loss = tf.add_n(losses, name='total_loss')
 
     # Compute the moving average of all individual losses and the total loss.
-    loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
-    loss_averages_op = loss_averages.apply(losses + [total_loss])
+    #loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+    #loss_averages_op = loss_averages.apply(losses + [total_loss])
 
     # Attach a scalar summary to all individual losses and the total loss;
     # do the same for the averaged version of the losses.
@@ -165,12 +165,12 @@ def tower_loss(scope, feats, labels, seq_lens):
                            loss.op.name)
         # Name each loss as '(raw)' and name the moving average
         # version of the loss as the original loss name.
-        tf.scalar_summary(loss_name + '(raw)', loss)
-        tf.scalar_summary(loss_name, loss_averages.average(loss))
+        tf.summary.scalar(loss_name + '(raw)', loss)
+        #tf.summary.scalar(loss_name, loss_averages.average(loss))
 
     # Without this loss_averages_op would never run
-    with tf.control_dependencies([loss_averages_op]):
-        total_loss = tf.identity(total_loss)
+    #with tf.control_dependencies([loss_averages_op]):
+        #total_loss = tf.identity(total_loss)
     return total_loss
 
 
@@ -200,7 +200,7 @@ def average_gradients(tower_grads):
             grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
-        grad = tf.concat(0, grads)
+        grad = tf.concat(axis=0,values=grads)
         grad = tf.reduce_mean(grad, 0)
 
         # The variables are redundant because they are shared
@@ -248,9 +248,9 @@ def fetch_data():
                                                 shuffle=ARGS.shuffle)
 
     # Split features and labels and sequence lengths for each tower
-    split_feats = tf.split(0, ARGS.num_gpus, feats)
-    split_labels = tf.sparse_split(0, ARGS.num_gpus, labels)
-    split_seq_lens = tf.split(0, ARGS.num_gpus, seq_lens)
+    split_feats = tf.split(feats, ARGS.num_gpus, 0)
+    split_labels = tf.sparse_split(sp_input = labels, num_split = ARGS.num_gpus, axis= 0)
+    split_seq_lens = tf.split(seq_lens, ARGS.num_gpus, 0)
 
     return split_feats, split_labels, split_seq_lens
 
@@ -262,27 +262,28 @@ def get_loss_grads(data, optimizer):
     # Calculate the gradients for each model tower.
     [feats, labels, seq_lens] = data
     tower_grads = []
-    for i in range(ARGS.num_gpus):
-        with tf.device('/gpu:%d' % i):
-            name_scope = '%s_%d' % (helper_routines.TOWER_NAME, i)
-            with tf.name_scope(name_scope) as scope:
-                # Calculate the loss for one tower of the deepSpeech model.
-                # This function constructs the entire deepSpeech model
-                # but shares the variables across all towers.
-                loss = tower_loss(scope, feats[i], labels[i], seq_lens[i])
+    with tf.variable_scope(tf.get_variable_scope()):
+        for i in range(ARGS.num_gpus):
+            with tf.device('/gpu:%d' % i):
+                name_scope = '%s_%d' % (helper_routines.TOWER_NAME, i)
+                with tf.name_scope(name_scope) as scope:
+                    # Calculate the loss for one tower of the deepSpeech model.
+                    # This function constructs the entire deepSpeech model
+                    # but shares the variables across all towers.
+                    loss = tower_loss(scope, feats[i], labels[i], seq_lens[i])
 
-                # Reuse variables for the next tower.
-                tf.get_variable_scope().reuse_variables()
+                    # Reuse variables for the next tower.
+                    tf.get_variable_scope().reuse_variables()
 
-                # Retain the summaries from the final tower.
-                summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
+                    # Retain the summaries from the final tower.
+                    summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
 
-                # Calculate the gradients for the batch of
-                # data on this tower.
-                grads_and_vars = optimizer.compute_gradients(loss)
+                    # Calculate the gradients for the batch of
+                    # data on this tower.
+                    grads_and_vars = optimizer.compute_gradients(loss)
 
-                # Keep track of the gradients across all towers.
-                tower_grads.append(grads_and_vars)
+                    # Keep track of the gradients across all towers.
+                    tower_grads.append(grads_and_vars)
 
     return loss, tower_grads, summaries
 
@@ -290,7 +291,7 @@ def get_loss_grads(data, optimizer):
 def run_train_loop(sess, operations, saver):
     """ Train the model for required number of steps."""
     (train_op, loss_op, summary_op) = operations
-    summary_writer = tf.train.SummaryWriter(ARGS.train_dir, sess.graph)
+    summary_writer = tf.summary.FileWriter(ARGS.train_dir, sess.graph)
 
     # Evaluate the ops for max_steps
     for step in range(ARGS.max_steps):
@@ -340,19 +341,19 @@ def add_summaries(summaries, learning_rate, grads):
     """ Add summary ops"""
 
     # Track quantities for Tensorboard display
-    summaries.append(tf.scalar_summary('learning_rate', learning_rate))
+    summaries.append(tf.summary.scalar('learning_rate', learning_rate))
     # Add histograms for gradients.
     for grad, var in grads:
         if grad is not None:
             summaries.append(
-                tf.histogram_summary(var.op.name +
-                                     '/gradients', grad))
+                tf.summary.histogram(var.op.name +
+                                      '/gradients', grad))
     # Add histograms for trainable variables.
     for var in tf.trainable_variables():
-        summaries.append(tf.histogram_summary(var.op.name, var))
+        summaries.append(tf.summary.histogram(var.op.name, var))
 
     # Build the summary operation from the last tower summaries.
-    summary_op = tf.merge_summary(summaries)
+    summary_op = tf.summary.merge(summaries)
     return summary_op
 
 

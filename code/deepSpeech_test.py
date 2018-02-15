@@ -32,7 +32,7 @@ from Levenshtein import distance
 
 # Note this definition must match the ALPHABET chosen in
 # preprocess_Librispeech.py
-ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ' "
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ'.-$ " 
 IX_TO_CHAR = {i: ch for (i, ch) in enumerate(ALPHABET)}
 
 
@@ -77,7 +77,7 @@ def parse_args():
 
 def sparse_to_labels(sparse_matrix):
     """ Convert index based transcripts to strings"""
-    results = ['']*sparse_matrix.shape[0]
+    results = ['']*sparse_matrix.dense_shape[0]
     for i, val in enumerate(sparse_matrix.values.tolist()):
         results[sparse_matrix.indices[i, 0]] += IX_TO_CHAR[val]
     return results
@@ -216,8 +216,8 @@ def evaluate():
         saver = tf.train.Saver(variables_to_restore)
 
         # Build the summary operation based on the TF collection of Summaries.
-        summary_op = tf.merge_all_summaries()
-        summary_writer = tf.train.SummaryWriter(ARGS.eval_dir, graph)
+        summary_op = tf.summary.merge_all()
+        summary_writer = tf.summary.FileWriter(ARGS.eval_dir, graph)
 
         while True:
             eval_once(saver, summary_writer, predictions, summary_op, labels)
