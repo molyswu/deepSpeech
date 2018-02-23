@@ -28,7 +28,7 @@ $ source activate SpeechRecog
 (SpeechRecog)$ pip install scipy
 (SpeechRecog)$ pip install tqdm
 
-# Install TensorFlow 0.11 by following instructions here:
+# Install TensorFlow by following instructions here:
 https://www.tensorflow.org/install/
 For GPU support, make sure you have installed CUDA and cuDNN using the instructions in the above link.
 
