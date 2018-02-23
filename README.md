@@ -7,7 +7,7 @@ This software is released under a BSD license. The license to this software does
 
 Pre-requisites
 -------------
-* TensorFlow - version: r0.11
+* TensorFlow - version: 1.0+
 * python-levenshtein - to compute Character-Error-Rate
 * python_speech_features - to generate mfcc features
 * PySoundFile - to read FLAC files
@@ -29,7 +29,7 @@ $ source activate SpeechRecog
 (SpeechRecog)$ pip install tqdm
 
 # Install TensorFlow 0.11 by following instructions here:
-https://github.com/tensorflow/tensorflow/blob/r0.11/tensorflow/g3doc/get_started/os_setup.md
+https://www.tensorflow.org/install/
 For GPU support, make sure you have installed CUDA and cuDNN using the instructions in the above link.
 
 # Update ~/.bashrc to reflect path for CUDA.
@@ -38,7 +38,7 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/e
 export CUDA_HOME=/usr/local/cuda
 
 On a Linux machine with GPU support, use: 
-(SpeechRecog)$ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0-cp35-cp35m-linux_x86_64.whl
+(SpeechRecog)$ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.5.0-cp34-cp34m-linux_x86_64.whl
 (SpeechRecog)$ pip install --upgrade $TF_BINARY_URL
 ```
 *Step 2: Clone this git repo.*
