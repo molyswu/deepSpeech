@@ -246,12 +246,13 @@ def fetch_data():
                                                 batch_size=tot_batch_size,
                                                 use_fp16=ARGS.use_fp16,
                                                 shuffle=ARGS.shuffle)
+    #labels = tf.deserialize_many_sparse(labels, tf.int32)
 
     # Split features and labels and sequence lengths for each tower
     split_feats = tf.split(feats, ARGS.num_gpus, 0)
     split_labels = tf.sparse_split(sp_input = labels, num_split = ARGS.num_gpus, axis= 0)
     split_seq_lens = tf.split(seq_lens, ARGS.num_gpus, 0)
-
+    print(len(split_feats))
     return split_feats, split_labels, split_seq_lens
 
 
@@ -414,7 +415,7 @@ def train():
             sess.run(tf.initialize_all_variables())
 
         # Start the queue runners.
-        tf.train.start_queue_runners(sess)
+        #tf.train.start_queue_runners(sess)
 
         # Run training loop
         run_train_loop(sess, (train_op, loss_op, summary_op), saver)
