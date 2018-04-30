@@ -51,10 +51,12 @@ def inputs(eval_data, data_dir, batch_size, use_fp16, shuffle):
     """
     if not data_dir:
         raise ValueError('Please supply a data_dir')
-    feats, labels, seq_lens = deepSpeech_input.inputs(eval_data=eval_data,
+    seq_lens, labels, feats = deepSpeech_input.inputs(eval_data=eval_data,
                                                       data_dir=data_dir,
                                                       batch_size=batch_size,
                                                       shuffle=shuffle)
+    print("HERE",feats.dtype)
+    labels = tf.deserialize_many_sparse(labels, tf.int32)
     if use_fp16:
         feats = tf.cast(feats, tf.float16)
     return feats, labels, seq_lens
