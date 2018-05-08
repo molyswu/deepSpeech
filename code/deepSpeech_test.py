@@ -148,10 +148,10 @@ def eval_once(saver, summary_writer, predictions_op, summary_op,
         coord = tf.train.Coordinator()
         try:
             threads = []
-            for queue_runners in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-                threads.extend(queue_runners.create_threads(sess, coord=coord,
-                                                            daemon=True,
-                                                            start=True))
+            # for queue_runners in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+            #     threads.extend(queue_runners.create_threads(sess, coord=coord,
+            #                                                 daemon=True,
+            #                                                 start=True))
             # Only using a subset of the training data
             if ARGS.eval_data == 'train':
                 num_examples = 2048
