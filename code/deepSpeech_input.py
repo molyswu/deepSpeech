@@ -10,7 +10,7 @@ import tensorflow as tf
 # Global constants describing the dataset
 # Note this definition must match the ALPHABET chosen in
 # preprocess_Librispeech.py
-ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ'.-$ "   # for LibriSpeech
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ' "  # for LibriSpeech
 NUM_CLASSES = len(ALPHABET) + 1  # Additional class for blank character
 NUM_PER_EPOCH_FOR_TRAIN = 28535
 NUM_PER_EPOCH_FOR_EVAL = 2703

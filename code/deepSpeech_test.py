@@ -32,7 +32,7 @@ from Levenshtein import distance
 
 # Note this definition must match the ALPHABET chosen in
 # preprocess_Librispeech.py
-ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ'.-$ " 
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ' "
 IX_TO_CHAR = {i: ch for (i, ch) in enumerate(ALPHABET)}
 
 
