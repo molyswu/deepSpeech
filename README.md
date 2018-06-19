@@ -7,7 +7,8 @@ This software is released under a BSD license. The license to this software does
 
 Pre-requisites
 -------------
-* TensorFlow - version: 1.0+
+* Python 3.5
+* TensorFlow - version: 1.2+
 * python-levenshtein - to compute Character-Error-Rate
 * python_speech_features - to generate mfcc features
 * PySoundFile - to read FLAC files
@@ -37,9 +38,13 @@ Add these lines to the ~/.bashrc:
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
 export CUDA_HOME=/usr/local/cuda
 
-On a Linux machine with GPU support, use: 
+# On a Linux machine with GPU support, use: 
 (SpeechRecog)$ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.5.0-cp34-cp34m-linux_x86_64.whl
 (SpeechRecog)$ pip install --upgrade $TF_BINARY_URL
+
+# If you see a sndfile Error:
+sudo apt-get install libsndfile1
+
 ```
 *Step 2: Clone this git repo.*
 ```
@@ -95,3 +100,5 @@ Testing a model
 ```
 (SpeechRecog)$python deepSpeech_test.py --eval_data 'test' --checkpoint_dir PATH_TO_SAVED_CHECKPOINT_FILE
 ```
+
+
