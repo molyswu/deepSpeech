@@ -29,6 +29,8 @@ import deepSpeech
 import numpy as np
 import tensorflow as tf
 from Levenshtein import distance
+from lm import LM
+from lm_decoder import GreedyDecoder, PrefixDecoder
 
 # Note this definition must match the ALPHABET chosen in
 # preprocess_Librispeech.py
@@ -56,6 +58,10 @@ def parse_args():
                         help='Path to the deepSpeech data directory')
     parser.add_argument('--run_once', type=bool, default=False,
                         help='Whether to run eval only once')
+    parser.add_argument('--lm_model', type=str, default=None,
+                        help='klm langugae model for decoding')
+    parser.add_argument('--decoder', type=str, default=None,
+                            help='Use a custom decoder, options are "prefix" or "greedy"')
     args = parser.parse_args()
 
     # Read saved parameters from file
@@ -102,7 +108,7 @@ def initialize_from_checkpoint(sess, saver):
         return
 
 
-def inference(predictions_op, true_labels_op, display, sess):
+def inference(predictions_op, true_labels_op, display, sess, logits_op, lm):
     """ Perform inference per batch on pre-trained model.
     This function performs inference and computes the CER per utterance.
     Args:
@@ -115,22 +121,47 @@ def inference(predictions_op, true_labels_op, display, sess):
     """
     char_err_rate = []
     # Perform inference of batch worth of data at a time.
-    [predictions, true_labels] = sess.run([predictions_op,
-                                           true_labels_op])
+    [predictions, true_labels, logits] = sess.run([predictions_op,
+                                           true_labels_op, logits_op])
     pred_label = sparse_to_labels(predictions[0][0])
     actual_label = sparse_to_labels(true_labels)
+
+    ##write logits and labels to file, for testing decoders
+    # np.save('out.txt',logits)
+    #
+    # labelsfile = open("labels.txt", "w")
+    # for l in actual_label:
+    #     labelsfile.write(l + '\n')
+    # labelsfile.close()
+
+    if ARGS.decoder == 'greedy':
+        greedyDecoder = GreedyDecoder()
+        pred_label = greedyDecoder.decode_logits(logits)
+    elif ARGS.decoder == 'prefix':
+        if lm:
+            prefixDecoder = PrefixDecoder(lm)
+            pred_label = prefixDecoder.decode_logits(logits)
+        else:
+            raise Exception('PrefixDecoder needs LanguageModel')
+            return
+
     for (label, pred) in zip(actual_label, pred_label):
+        if lm:
+            pred = lm.checkSentence(pred)
         char_err_rate.append(distance(label, pred)/len(label))
 
     if display:
         # Print sample responses
         for i in range(ARGS.batch_size):
-            print(actual_label[i] + ' vs ' + pred_label[i])
+            if lm:
+                print(actual_label[i] + ' vs ' + lm.checkSentence(pred_label[i]))
+            else:
+                print(actual_label[i] + ' vs ' + pred_label[i])
     return char_err_rate
 
 
 def eval_once(saver, summary_writer, predictions_op, summary_op,
-              true_labels_op):
+              true_labels_op, logits_op, lm):
     """Run Eval once.
 
     Args:
@@ -166,7 +197,7 @@ def eval_once(saver, summary_writer, predictions_op, summary_op,
             char_err_rate = []
             while step < num_iter and not coord.should_stop():
                 char_err_rate.append(inference(predictions_op, true_labels_op,
-                                               step == 0, sess))
+                                               step == 0, sess, logits_op, lm))
                 step += 1
 
             # Compute and print mean CER
@@ -188,6 +219,11 @@ def eval_once(saver, summary_writer, predictions_op, summary_op,
 
 def evaluate():
     """ Evaluate deepSpeech modelfor a number of steps."""
+    if ARGS.lm_model != None:
+        print(ARGS.lm_model)
+        lm = LM(ARGS.lm_model)
+    else:
+        lm = None
 
     with tf.Graph().as_default() as graph:
 
@@ -204,7 +240,7 @@ def evaluate():
         logits = deepSpeech.inference(feats, seq_lens, ARGS)
 
         # Calculate predictions.
-        output_log_prob = tf.nn.log_softmax(logits)
+        output_log_prob = tf.nn.softmax(logits)
         decoder = tf.nn.ctc_greedy_decoder
         strided_seq_lens = tf.div(seq_lens, ARGS.temporal_stride)
         predictions = decoder(output_log_prob, strided_seq_lens)
@@ -220,7 +256,7 @@ def evaluate():
         summary_writer = tf.summary.FileWriter(ARGS.eval_dir, graph)
 
         while True:
-            eval_once(saver, summary_writer, predictions, summary_op, labels)
+            eval_once(saver, summary_writer, predictions, summary_op, labels, output_log_prob, lm)
 
             if ARGS.run_once:
                 break
